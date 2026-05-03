@@ -1,0 +1,954 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">
+    <meta name="description" content="Dry-fire rifle practice timer for precision shooting training">
+    <meta name="theme-color" content="#1e3c72">
+    <meta name="apple-mobile-web-app-capable" content="yes">
+    <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+    <meta name="apple-mobile-web-app-title" content="Dry-Fire Timer">
+    <title>Dry-Fire Rifle Practice Timer</title>
+    <link rel="icon" type="image/svg+xml" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'%3E%3Ccircle cx='50' cy='50' r='45' fill='%231e3c72'/%3E%3Ctext x='50' y='70' font-size='60' text-anchor='middle' fill='white'%3E🎯%3C/text%3E%3C/svg%3E">
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Oxygen, Ubuntu, Cantarell, sans-serif;
+            background: linear-gradient(135deg, #1e3c72 0%, #2a5298 100%);
+            color: #ffffff;
+            min-height: 100vh;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            padding: 20px;
+        }
+
+        .container {
+            background: rgba(255, 255, 255, 0.1);
+            backdrop-filter: blur(10px);
+            border-radius: 20px;
+            padding: 40px;
+            max-width: 800px;
+            width: 100%;
+            box-shadow: 0 8px 32px rgba(0, 0, 0, 0.3);
+        }
+
+        h1 {
+            text-align: center;
+            font-size: 2.5rem;
+            margin-bottom: 30px;
+            font-weight: 300;
+            letter-spacing: 2px;
+        }
+
+        .settings {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+            gap: 20px;
+            margin-bottom: 30px;
+        }
+
+        .setting-group {
+            display: flex;
+            flex-direction: column;
+        }
+
+        label {
+            font-size: 0.9rem;
+            margin-bottom: 8px;
+            opacity: 0.9;
+            text-transform: uppercase;
+            letter-spacing: 1px;
+        }
+
+        input[type="number"],
+        input[type="range"] {
+            padding: 12px;
+            font-size: 1.2rem;
+            border: 2px solid rgba(255, 255, 255, 0.3);
+            background: rgba(255, 255, 255, 0.1);
+            color: #ffffff;
+            border-radius: 8px;
+            width: 100%;
+        }
+
+        input[type="number"]:focus,
+        input[type="range"]:focus {
+            outline: none;
+            border-color: rgba(255, 255, 255, 0.6);
+        }
+
+        input[type="number"]::placeholder {
+            color: rgba(255, 255, 255, 0.5);
+        }
+
+        .volume-control {
+            display: flex;
+            align-items: center;
+            gap: 10px;
+        }
+
+        .volume-value {
+            min-width: 40px;
+            text-align: center;
+            font-size: 1.1rem;
+        }
+
+        .display-area {
+            text-align: center;
+            margin: 40px 0;
+            padding: 30px;
+            background: rgba(0, 0, 0, 0.3);
+            border-radius: 15px;
+        }
+
+        .phase-label {
+            font-size: 3rem;
+            font-weight: 700;
+            margin-bottom: 20px;
+            text-transform: uppercase;
+            letter-spacing: 4px;
+            min-height: 80px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+        }
+
+        .phase-label.fire { color: #ff6b6b; }
+        .phase-label.hold { color: #4ecdc4; }
+        .phase-label.paused { color: #ffd93d; }
+        .phase-label.done { color: #51cf66; }
+
+        .timer {
+            font-size: 5rem;
+            font-weight: 300;
+            font-variant-numeric: tabular-nums;
+            margin: 20px 0;
+            letter-spacing: 4px;
+        }
+
+        .progress-info {
+            font-size: 1.5rem;
+            margin-top: 20px;
+            opacity: 0.9;
+        }
+
+        .progress-bar-container {
+            width: 100%;
+            height: 8px;
+            background: rgba(255, 255, 255, 0.2);
+            border-radius: 4px;
+            margin-top: 20px;
+            overflow: hidden;
+        }
+
+        .progress-bar {
+            height: 100%;
+            background: linear-gradient(90deg, #4ecdc4, #51cf66);
+            transition: width 0.1s linear;
+            border-radius: 4px;
+        }
+
+        .controls {
+            display: flex;
+            gap: 15px;
+            justify-content: center;
+            flex-wrap: wrap;
+            margin-bottom: 30px;
+        }
+
+        button {
+            padding: 18px 36px;
+            font-size: 1.3rem;
+            font-weight: 600;
+            border: none;
+            border-radius: 10px;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            text-transform: uppercase;
+            letter-spacing: 1px;
+            min-width: 140px;
+        }
+
+        button:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 4px 12px rgba(0, 0, 0, 0.3);
+        }
+
+        button:active {
+            transform: translateY(0);
+        }
+
+        button:disabled {
+            opacity: 0.5;
+            cursor: not-allowed;
+            transform: none;
+        }
+
+        .btn-start {
+            background: #51cf66;
+            color: #ffffff;
+        }
+
+        .btn-pause {
+            background: #ffd93d;
+            color: #1e3c72;
+        }
+
+        .btn-resume {
+            background: #4ecdc4;
+            color: #ffffff;
+        }
+
+        .btn-stop {
+            background: #ff6b6b;
+            color: #ffffff;
+        }
+
+        .btn-reset {
+            background: rgba(255, 255, 255, 0.2);
+            color: #ffffff;
+            border: 2px solid rgba(255, 255, 255, 0.3);
+        }
+
+        .log {
+            margin-top: 30px;
+            padding: 20px;
+            background: rgba(0, 0, 0, 0.2);
+            border-radius: 10px;
+            max-height: 200px;
+            overflow-y: auto;
+        }
+
+        .log-title {
+            font-size: 1rem;
+            margin-bottom: 10px;
+            opacity: 0.8;
+            text-transform: uppercase;
+            letter-spacing: 1px;
+        }
+
+        .log-entry {
+            font-size: 0.9rem;
+            padding: 5px 0;
+            opacity: 0.7;
+            border-bottom: 1px solid rgba(255, 255, 255, 0.1);
+        }
+
+        .log-entry:last-child {
+            border-bottom: none;
+        }
+
+        .keyboard-hint {
+            text-align: center;
+            margin-top: 20px;
+            font-size: 0.85rem;
+            opacity: 0.6;
+            font-style: italic;
+        }
+
+        /* Mobile optimizations */
+        @media (max-width: 600px) {
+            body {
+                padding: 10px;
+                min-height: 100vh;
+                min-height: -webkit-fill-available; /* iOS fix */
+            }
+
+            .container {
+                padding: 20px;
+                border-radius: 15px;
+            }
+
+            h1 {
+                font-size: 1.5rem;
+                margin-bottom: 20px;
+            }
+
+            .settings {
+                grid-template-columns: 1fr;
+                gap: 15px;
+                margin-bottom: 25px;
+            }
+
+            .setting-group label {
+                font-size: 0.8rem;
+            }
+
+            .display-area {
+                padding: 20px;
+                margin: 25px 0;
+            }
+
+            .phase-label {
+                font-size: 2rem;
+                min-height: 60px;
+                letter-spacing: 2px;
+            }
+
+            .timer {
+                font-size: 3.5rem;
+                letter-spacing: 2px;
+            }
+
+            .progress-info {
+                font-size: 1.2rem;
+            }
+
+            .controls {
+                gap: 10px;
+                margin-bottom: 20px;
+            }
+
+            button {
+                padding: 16px 20px;
+                font-size: 1rem;
+                min-width: 0;
+                flex: 1;
+                min-width: 100px;
+                touch-action: manipulation; /* Prevents double-tap zoom */
+            }
+
+            .keyboard-hint {
+                display: none; /* Hide on mobile */
+            }
+
+            .log {
+                max-height: 150px;
+                padding: 15px;
+            }
+
+            input[type="number"],
+            input[type="range"] {
+                padding: 14px;
+                font-size: 1.1rem;
+                -webkit-appearance: none;
+                appearance: none;
+            }
+
+            input[type="range"] {
+                height: 8px;
+            }
+
+            input[type="range"]::-webkit-slider-thumb {
+                -webkit-appearance: none;
+                appearance: none;
+                width: 24px;
+                height: 24px;
+                border-radius: 50%;
+                background: #ffffff;
+                cursor: pointer;
+            }
+        }
+
+        /* Prevent text selection on buttons during use */
+        button {
+            -webkit-user-select: none;
+            -moz-user-select: none;
+            user-select: none;
+            -webkit-tap-highlight-color: transparent;
+        }
+
+        /* Keep screen awake during practice */
+        @media (max-width: 600px) {
+            body {
+                /* This prevents screen sleep, but requires Wake Lock API in JS */
+            }
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h1>Dry-Fire Practice Timer</h1>
+        
+        <div class="settings">
+            <div class="setting-group">
+                <label for="totalReps">Total Repetitions</label>
+                <input type="number" id="totalReps" min="1" max="999" value="100">
+            </div>
+            <div class="setting-group">
+                <label for="fireSeconds">Fire Duration (seconds)</label>
+                <input type="number" id="fireSeconds" min="1" max="999" value="20">
+            </div>
+            <div class="setting-group">
+                <label for="holdSeconds">Hold Duration (seconds)</label>
+                <input type="number" id="holdSeconds" min="1" max="999" value="5">
+            </div>
+            <div class="setting-group">
+                <label for="beepVolume">Beep Volume</label>
+                <div class="volume-control">
+                    <input type="range" id="beepVolume" min="0" max="1" step="0.1" value="0.7">
+                    <span class="volume-value" id="volumeValue">70%</span>
+                </div>
+            </div>
+        </div>
+
+        <div class="display-area">
+            <div class="phase-label" id="phaseLabel">READY</div>
+            <div class="timer" id="timer">00:00</div>
+            <div class="progress-info" id="progressInfo">Rep 0 / 100</div>
+            <div class="progress-bar-container">
+                <div class="progress-bar" id="progressBar" style="width: 0%"></div>
+            </div>
+        </div>
+
+        <div class="controls">
+            <button class="btn-start" id="btnStart">Start</button>
+            <button class="btn-pause" id="btnPause" disabled>Pause</button>
+            <button class="btn-resume" id="btnResume" disabled>Resume</button>
+            <button class="btn-stop" id="btnStop" disabled>Stop</button>
+            <button class="btn-reset" id="btnReset">Reset</button>
+        </div>
+
+        <div class="log">
+            <div class="log-title">Session Log</div>
+            <div id="logEntries"></div>
+        </div>
+
+        <div class="keyboard-hint">
+            Keyboard: Space (Pause/Resume) | Enter (Start) | Esc (Stop)
+        </div>
+    </div>
+
+    <script>
+        // State machine states
+        const STATE = {
+            STOPPED: 'STOPPED',
+            RUNNING: 'RUNNING',
+            PAUSED: 'PAUSED',
+            FIRE: 'FIRE',
+            HOLD: 'HOLD',
+            DONE: 'DONE'
+        };
+
+        let currentState = STATE.STOPPED;
+        let audioContext = null;
+        let animationFrameId = null;
+        let startTime = null;
+        let pausedTime = 0;
+        let currentRep = 0;
+        let phaseStartTime = null;
+        let phaseRemaining = 0;
+        let currentPhase = STATE.FIRE;
+        let lastSessionSaveTime = 0;
+
+        const STORAGE_KEYS = {
+            totalReps: 'dryFire_totalReps',
+            fireSeconds: 'dryFire_fireSeconds',
+            holdSeconds: 'dryFire_holdSeconds',
+            beepVolume: 'dryFire_beepVolume',
+            session: 'dryFire_session'
+        };
+
+        // DOM elements
+        const totalRepsInput = document.getElementById('totalReps');
+        const fireSecondsInput = document.getElementById('fireSeconds');
+        const holdSecondsInput = document.getElementById('holdSeconds');
+        const beepVolumeInput = document.getElementById('beepVolume');
+        const volumeValue = document.getElementById('volumeValue');
+        const phaseLabel = document.getElementById('phaseLabel');
+        const timer = document.getElementById('timer');
+        const progressInfo = document.getElementById('progressInfo');
+        const progressBar = document.getElementById('progressBar');
+        const btnStart = document.getElementById('btnStart');
+        const btnPause = document.getElementById('btnPause');
+        const btnResume = document.getElementById('btnResume');
+        const btnStop = document.getElementById('btnStop');
+        const btnReset = document.getElementById('btnReset');
+        const logEntries = document.getElementById('logEntries');
+
+        // Load settings from localStorage
+        function loadSettings() {
+            const savedReps = localStorage.getItem(STORAGE_KEYS.totalReps);
+            const savedFire = localStorage.getItem(STORAGE_KEYS.fireSeconds);
+            const savedHold = localStorage.getItem(STORAGE_KEYS.holdSeconds);
+            const savedVolume = localStorage.getItem(STORAGE_KEYS.beepVolume);
+
+            if (savedReps) totalRepsInput.value = savedReps;
+            if (savedFire) fireSecondsInput.value = savedFire;
+            if (savedHold) holdSecondsInput.value = savedHold;
+            if (savedVolume) {
+                beepVolumeInput.value = savedVolume;
+                updateVolumeDisplay();
+            }
+        }
+
+        // Save settings to localStorage
+        function saveSettings() {
+            localStorage.setItem(STORAGE_KEYS.totalReps, totalRepsInput.value);
+            localStorage.setItem(STORAGE_KEYS.fireSeconds, fireSecondsInput.value);
+            localStorage.setItem(STORAGE_KEYS.holdSeconds, holdSecondsInput.value);
+            localStorage.setItem(STORAGE_KEYS.beepVolume, beepVolumeInput.value);
+        }
+
+        function getLogMessages() {
+            return Array.from(logEntries.children).map(entry => entry.textContent);
+        }
+
+        function restoreLogMessages(entries) {
+            logEntries.innerHTML = '';
+            if (!Array.isArray(entries)) return;
+            entries.forEach((text) => {
+                const entry = document.createElement('div');
+                entry.className = 'log-entry';
+                entry.textContent = text;
+                logEntries.appendChild(entry);
+            });
+        }
+
+        function saveSessionProgress() {
+            const session = {
+                currentState,
+                currentRep,
+                currentPhase,
+                phaseRemaining,
+                pausedTime,
+                logs: getLogMessages()
+            };
+            localStorage.setItem(STORAGE_KEYS.session, JSON.stringify(session));
+        }
+
+        function clearSessionProgress() {
+            localStorage.removeItem(STORAGE_KEYS.session);
+        }
+
+        function loadSessionProgress() {
+            const rawSession = localStorage.getItem(STORAGE_KEYS.session);
+            if (!rawSession) return;
+
+            try {
+                const session = JSON.parse(rawSession);
+                if (!session || typeof session !== 'object') return;
+
+                currentRep = Number.isFinite(session.currentRep) ? session.currentRep : 0;
+                currentPhase = session.currentPhase === STATE.HOLD ? STATE.HOLD : STATE.FIRE;
+                phaseRemaining = Number.isFinite(session.phaseRemaining) ? session.phaseRemaining : 0;
+                pausedTime = Number.isFinite(session.pausedTime) ? session.pausedTime : 0;
+                currentState = Object.values(STATE).includes(session.currentState) ? session.currentState : STATE.STOPPED;
+
+                if (currentState === STATE.RUNNING) {
+                    currentState = STATE.PAUSED;
+                }
+
+                restoreLogMessages(session.logs);
+            } catch (err) {
+                console.log('Failed to load saved session:', err);
+            }
+        }
+
+        // Initialize audio context
+        function initAudioContext() {
+            if (!audioContext) {
+                audioContext = new (window.AudioContext || window.webkitAudioContext)();
+            }
+        }
+
+        // Play beep sound
+        function playBeep(frequency = 800, duration = 0.2, pattern = 'single') {
+            if (!audioContext) initAudioContext();
+
+            const volume = parseFloat(beepVolumeInput.value);
+            if (volume === 0) return;
+
+            if (pattern === 'single') {
+                playSingleBeep(frequency, duration, volume);
+            } else if (pattern === 'double') {
+                playSingleBeep(frequency, duration, volume);
+                setTimeout(() => {
+                    playSingleBeep(frequency, duration, volume);
+                }, duration * 1000 + 100);
+            }
+        }
+
+        function playSingleBeep(frequency, duration, volume) {
+            const oscillator = audioContext.createOscillator();
+            const gainNode = audioContext.createGain();
+
+            oscillator.connect(gainNode);
+            gainNode.connect(audioContext.destination);
+
+            oscillator.frequency.value = frequency;
+            oscillator.type = 'sine';
+
+            gainNode.gain.setValueAtTime(0, audioContext.currentTime);
+            gainNode.gain.linearRampToValueAtTime(volume, audioContext.currentTime + 0.01);
+            gainNode.gain.linearRampToValueAtTime(0, audioContext.currentTime + duration);
+
+            oscillator.start(audioContext.currentTime);
+            oscillator.stop(audioContext.currentTime + duration);
+        }
+
+        // Vibration support (mobile)
+        function vibrate(pattern) {
+            if (navigator.vibrate) {
+                navigator.vibrate(pattern);
+            }
+        }
+
+        // Format time as mm:ss
+        function formatTime(seconds) {
+            const mins = Math.floor(seconds / 60);
+            const secs = Math.floor(seconds % 60);
+            return `${String(mins).padStart(2, '0')}:${String(secs).padStart(2, '0')}`;
+        }
+
+        // Validate inputs
+        function validateInputs() {
+            const reps = parseInt(totalRepsInput.value);
+            const fire = parseInt(fireSecondsInput.value);
+            const hold = parseInt(holdSecondsInput.value);
+
+            if (isNaN(reps) || reps < 1 || reps > 999) {
+                alert('Total repetitions must be between 1 and 999');
+                return false;
+            }
+            if (isNaN(fire) || fire < 1 || fire > 999) {
+                alert('Fire duration must be between 1 and 999 seconds');
+                return false;
+            }
+            if (isNaN(hold) || hold < 1 || hold > 999) {
+                alert('Hold duration must be between 1 and 999 seconds');
+                return false;
+            }
+            return true;
+        }
+
+        // Get current settings
+        function getSettings() {
+            return {
+                totalReps: parseInt(totalRepsInput.value),
+                fireSeconds: parseInt(fireSecondsInput.value),
+                holdSeconds: parseInt(holdSecondsInput.value)
+            };
+        }
+
+        // Update UI based on state
+        function updateUI() {
+            const settings = getSettings();
+            let remaining = 0;
+
+            if (currentState === STATE.RUNNING || currentState === STATE.PAUSED) {
+                if (currentPhase === STATE.FIRE) {
+                    remaining = Math.max(0, phaseRemaining);
+                } else if (currentPhase === STATE.HOLD) {
+                    remaining = Math.max(0, phaseRemaining);
+                }
+
+                // Calculate overall session progress
+                // Each rep has fire + hold phases
+                const totalPhasesPerRep = 2;
+                const completedReps = Math.max(0, currentRep - 1);
+                const currentPhaseIndex = currentPhase === STATE.FIRE ? 0 : 1;
+                const totalPhases = settings.totalReps * totalPhasesPerRep;
+                
+                // Calculate phase progress within current rep
+                let phaseProgress = 0;
+                if (currentPhase === STATE.FIRE) {
+                    phaseProgress = (settings.fireSeconds - remaining) / settings.fireSeconds;
+                } else if (currentPhase === STATE.HOLD) {
+                    phaseProgress = (settings.holdSeconds - remaining) / settings.holdSeconds;
+                }
+                
+                // Overall progress = (completed reps * 2 + current phase index + phase progress) / total phases
+                const overallProgress = ((completedReps * totalPhasesPerRep + currentPhaseIndex + phaseProgress) / totalPhases) * 100;
+                progressBar.style.width = `${Math.min(100, Math.max(0, overallProgress))}%`;
+            } else if (currentState === STATE.DONE) {
+                progressBar.style.width = '100%';
+            } else {
+                progressBar.style.width = '0%';
+            }
+
+            // Update phase label and timer
+            if (currentState === STATE.PAUSED) {
+                phaseLabel.textContent = 'PAUSED';
+                phaseLabel.className = 'phase-label paused';
+                timer.textContent = formatTime(Math.max(0, remaining));
+            } else if (currentState === STATE.DONE) {
+                phaseLabel.textContent = 'DONE';
+                phaseLabel.className = 'phase-label done';
+                timer.textContent = '00:00';
+            } else if (currentPhase === STATE.FIRE) {
+                phaseLabel.textContent = 'FIRE';
+                phaseLabel.className = 'phase-label fire';
+                timer.textContent = formatTime(Math.max(0, remaining));
+            } else if (currentPhase === STATE.HOLD) {
+                phaseLabel.textContent = 'HOLD';
+                phaseLabel.className = 'phase-label hold';
+                timer.textContent = formatTime(Math.max(0, remaining));
+            } else {
+                phaseLabel.textContent = 'READY';
+                phaseLabel.className = 'phase-label';
+                timer.textContent = '00:00';
+            }
+
+            // Update progress info
+            progressInfo.textContent = `Rep ${currentRep} / ${settings.totalReps}`;
+
+            // Update buttons
+            btnStart.disabled = currentState !== STATE.STOPPED;
+            btnPause.disabled = currentState !== STATE.RUNNING;
+            btnResume.disabled = currentState !== STATE.PAUSED;
+            btnStop.disabled = currentState === STATE.STOPPED;
+            btnReset.disabled = false; // Reset always available
+        }
+
+        // Add log entry
+        function addLogEntry(message) {
+            const entry = document.createElement('div');
+            entry.className = 'log-entry';
+            const time = new Date().toLocaleTimeString();
+            entry.textContent = `[${time}] ${message}`;
+            logEntries.insertBefore(entry, logEntries.firstChild);
+            saveSessionProgress();
+        }
+
+        // Animation loop with drift correction
+        function animate() {
+            if (currentState !== STATE.RUNNING) {
+                animationFrameId = null;
+                return;
+            }
+
+            const settings = getSettings();
+            const now = performance.now();
+            const elapsed = (now - phaseStartTime) / 1000;
+            phaseRemaining = (currentPhase === STATE.FIRE ? settings.fireSeconds : settings.holdSeconds) - elapsed;
+
+            if (phaseRemaining <= 0) {
+                // Phase complete
+                if (currentPhase === STATE.FIRE) {
+                    // FIRE phase ends at 0 - beep for trigger (different sound)
+                    playBeep(1200, 0.2, 'single'); // Higher pitch beep for trigger
+                    vibrate([50]);
+                    // Transition to HOLD
+                    currentPhase = STATE.HOLD;
+                    phaseStartTime = now;
+                    phaseRemaining = settings.holdSeconds;
+                } else if (currentPhase === STATE.HOLD) {
+                    // HOLD complete, move to next rep
+                    currentRep++;
+                    
+                    if (currentRep > settings.totalReps) {
+                        // All reps complete
+                        currentState = STATE.DONE;
+                        playBeep(600, 0.3, 'double');
+                        vibrate([200, 100, 200]);
+                        addLogEntry('Session completed!');
+                        updateUI();
+                        return;
+                    } else {
+                        // Next rep - start of FIRE phase
+                        playBeep(600, 0.25, 'single'); // Lower beep for start of FIRE phase (aiming begins)
+                        vibrate([100]);
+                        addLogEntry(`Rep ${currentRep} started`);
+                        currentPhase = STATE.FIRE;
+                        phaseStartTime = now;
+                        phaseRemaining = settings.fireSeconds;
+                    }
+                }
+            }
+
+            updateUI();
+            if (now - lastSessionSaveTime >= 500) {
+                saveSessionProgress();
+                lastSessionSaveTime = now;
+            }
+            animationFrameId = requestAnimationFrame(animate);
+        }
+
+        // Start timer
+        function start() {
+            if (!validateInputs()) return;
+            if (currentState === STATE.RUNNING) return;
+
+            saveSettings();
+            initAudioContext();
+
+            currentState = STATE.RUNNING;
+            currentRep = 1;
+            currentPhase = STATE.FIRE;
+            pausedTime = 0;
+            
+            const settings = getSettings();
+            phaseStartTime = performance.now();
+            phaseRemaining = settings.fireSeconds;
+
+            addLogEntry(`Session started - ${settings.totalReps} reps`);
+            addLogEntry('Rep 1 started');
+            playBeep(600, 0.25, 'single'); // Lower beep for start of FIRE phase (aiming begins)
+            vibrate([100]);
+
+            updateUI();
+            saveSessionProgress();
+            animate();
+            requestWakeLock(); // Keep screen awake during practice
+        }
+
+        // Pause timer
+        function pause() {
+            if (currentState !== STATE.RUNNING) return;
+
+            currentState = STATE.PAUSED;
+            const now = performance.now();
+            pausedTime = now - phaseStartTime;
+            cancelAnimationFrame(animationFrameId);
+            animationFrameId = null;
+
+            addLogEntry('Paused');
+            updateUI();
+            saveSessionProgress();
+        }
+
+        // Resume timer
+        function resume() {
+            if (currentState !== STATE.PAUSED) return;
+
+            currentState = STATE.RUNNING;
+            const now = performance.now();
+            phaseStartTime = now - pausedTime;
+            pausedTime = 0;
+
+            addLogEntry('Resumed');
+            updateUI();
+            saveSessionProgress();
+            animate();
+        }
+
+        // Stop timer
+        function stop() {
+            if (currentState === STATE.STOPPED) return;
+
+            currentState = STATE.STOPPED;
+            cancelAnimationFrame(animationFrameId);
+            animationFrameId = null;
+            phaseRemaining = 0;
+            pausedTime = 0;
+
+            addLogEntry('Stopped');
+            updateUI();
+            saveSessionProgress();
+            releaseWakeLock(); // Allow screen to sleep
+        }
+
+        // Reset timer
+        function reset() {
+            const shouldReset = confirm('Reset session and clear saved progress?');
+            if (!shouldReset) return;
+
+            if (currentState === STATE.RUNNING || currentState === STATE.PAUSED) {
+                stop();
+            }
+            currentRep = 0;
+            currentPhase = STATE.FIRE;
+            phaseRemaining = 0;
+            currentState = STATE.STOPPED;
+            logEntries.innerHTML = '';
+            updateUI();
+            clearSessionProgress();
+            releaseWakeLock(); // Allow screen to sleep
+        }
+
+        // Update volume display
+        function updateVolumeDisplay() {
+            const volume = Math.round(parseFloat(beepVolumeInput.value) * 100);
+            volumeValue.textContent = `${volume}%`;
+        }
+
+        // Event listeners
+        btnStart.addEventListener('click', start);
+        btnPause.addEventListener('click', pause);
+        btnResume.addEventListener('click', resume);
+        btnStop.addEventListener('click', stop);
+        btnReset.addEventListener('click', reset);
+
+        beepVolumeInput.addEventListener('input', () => {
+            updateVolumeDisplay();
+            saveSettings();
+        });
+
+        totalRepsInput.addEventListener('change', saveSettings);
+        fireSecondsInput.addEventListener('change', saveSettings);
+        holdSecondsInput.addEventListener('change', saveSettings);
+
+        // Keyboard shortcuts
+        document.addEventListener('keydown', (e) => {
+            if (e.target.tagName === 'INPUT') return;
+
+            switch (e.key) {
+                case ' ':
+                    e.preventDefault();
+                    if (currentState === STATE.RUNNING) {
+                        pause();
+                    } else if (currentState === STATE.PAUSED) {
+                        resume();
+                    }
+                    break;
+                case 'Enter':
+                    e.preventDefault();
+                    if (currentState === STATE.STOPPED) {
+                        start();
+                    }
+                    break;
+                case 'Escape':
+                    e.preventDefault();
+                    if (currentState !== STATE.STOPPED) {
+                        stop();
+                    }
+                    break;
+            }
+        });
+
+        // Wake Lock API - Keep screen awake during practice
+        let wakeLock = null;
+        async function requestWakeLock() {
+            if ('wakeLock' in navigator) {
+                try {
+                    wakeLock = await navigator.wakeLock.request('screen');
+                    wakeLock.addEventListener('release', () => {
+                        console.log('Wake Lock released');
+                    });
+                } catch (err) {
+                    console.log('Wake Lock request failed:', err);
+                }
+            }
+        }
+
+        async function releaseWakeLock() {
+            if (wakeLock) {
+                try {
+                    await wakeLock.release();
+                    wakeLock = null;
+                } catch (err) {
+                    console.log('Wake Lock release failed:', err);
+                }
+            }
+        }
+
+
+        // Handle visibility change - reacquire wake lock if page becomes visible again
+        document.addEventListener('visibilitychange', async () => {
+            if (document.visibilityState === 'visible' && currentState === STATE.RUNNING) {
+                await requestWakeLock();
+            }
+        });
+
+        // Save progress before refresh/navigation
+        window.addEventListener('beforeunload', () => {
+            if (currentState !== STATE.STOPPED || currentRep > 0) {
+                saveSessionProgress();
+            }
+        });
+
+        // Initialize
+        loadSettings();
+        loadSessionProgress();
+        updateUI();
+    </script>
+</body>
+</html>
