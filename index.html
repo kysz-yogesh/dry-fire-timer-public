@@ -86,12 +86,7 @@
             letter-spacing: 1px;
         }
 
-        .settings-label-compact {
-            display: none;
-        }
-
-        input[type="number"],
-        input[type="range"] {
+        input[type="number"] {
             padding: 12px;
             font-size: 1.2rem;
             border: 2px solid rgba(255, 255, 255, 0.3);
@@ -99,6 +94,37 @@
             color: #ffffff;
             border-radius: 8px;
             width: 100%;
+        }
+
+        input[type="range"] {
+            -webkit-appearance: none;
+            appearance: none;
+            width: 100%;
+            height: 8px;
+            padding: 0;
+            border: none;
+            border-radius: 4px;
+            background: rgba(255, 255, 255, 0.25);
+            cursor: pointer;
+        }
+
+        input[type="range"]::-webkit-slider-thumb {
+            -webkit-appearance: none;
+            appearance: none;
+            width: 22px;
+            height: 22px;
+            border-radius: 50%;
+            background: #ffffff;
+            cursor: pointer;
+        }
+
+        input[type="range"]::-moz-range-thumb {
+            width: 22px;
+            height: 22px;
+            border: none;
+            border-radius: 50%;
+            background: #ffffff;
+            cursor: pointer;
         }
 
         input[type="number"]:focus,
@@ -111,16 +137,12 @@
             color: rgba(255, 255, 255, 0.5);
         }
 
-        .volume-control {
-            display: flex;
-            align-items: center;
-            gap: 10px;
-        }
-
         .volume-value {
-            min-width: 40px;
-            text-align: center;
-            font-size: 1.1rem;
+            min-width: 2.75rem;
+            text-align: right;
+            font-size: 0.95rem;
+            line-height: 1;
+            flex-shrink: 0;
         }
 
         .display-area {
@@ -253,14 +275,47 @@
             box-shadow: 0 2px 6px rgba(0, 0, 0, 0.25);
         }
 
-        .reset-footer {
-            display: flex;
-            justify-content: flex-end;
+        .bottom-bar {
+            display: grid;
+            grid-template-columns: minmax(0, 1fr) auto auto;
+            grid-template-areas:
+                "label label label"
+                "range value reset";
+            column-gap: 10px;
+            row-gap: 6px;
+            align-items: center;
             margin-top: 20px;
             padding-top: 16px;
             padding-bottom: max(8px, env(safe-area-inset-bottom, 0px));
             border-top: 1px solid rgba(255, 255, 255, 0.12);
             flex-shrink: 0;
+        }
+
+        .bottom-bar-label {
+            grid-area: label;
+            margin: 0;
+            font-size: 0.85rem;
+            opacity: 0.9;
+            text-transform: uppercase;
+            letter-spacing: 1px;
+        }
+
+        .bottom-bar-range {
+            grid-area: range;
+            width: 100%;
+            min-width: 0;
+            align-self: center;
+        }
+
+        .bottom-bar .volume-value {
+            grid-area: value;
+            align-self: center;
+        }
+
+        .bottom-bar .btn-reset {
+            grid-area: reset;
+            align-self: center;
+            margin: 0;
         }
 
         .log {
@@ -337,35 +392,46 @@
             }
 
             .settings {
-                grid-template-columns: repeat(3, minmax(0, 1fr));
-                gap: 8px 6px;
+                grid-template-columns: repeat(2, minmax(0, 1fr));
+                gap: 10px 8px;
                 margin-bottom: 18px;
             }
 
-            .setting-group:nth-child(5) {
-                grid-column: 1 / -1;
-            }
-
-            .settings-label-full {
-                display: none;
-            }
-
-            .settings-label-compact {
-                display: inline;
-            }
-
             .setting-group label {
-                font-size: 0.62rem;
+                font-size: 0.58rem;
                 margin-bottom: 4px;
-                letter-spacing: 0.4px;
-                line-height: 1.2;
+                letter-spacing: 0.3px;
+                line-height: 1.25;
             }
 
-            .setting-group:nth-child(-n + 4) input[type="number"] {
+            .setting-group input[type="number"] {
                 padding: 8px 6px;
                 font-size: 0.95rem;
                 border-radius: 6px;
                 border-width: 1px;
+            }
+
+            .bottom-bar {
+                column-gap: 8px;
+                row-gap: 5px;
+                margin-top: 16px;
+                padding-top: 14px;
+            }
+
+            .bottom-bar-label {
+                font-size: 0.58rem;
+                letter-spacing: 0.3px;
+            }
+
+            .bottom-bar .volume-value {
+                font-size: 0.85rem;
+                min-width: 2.25rem;
+            }
+
+            .bottom-bar .btn-reset {
+                padding: 7px 12px;
+                font-size: 0.68rem;
+                min-height: 2rem;
             }
 
             .display-area {
@@ -419,26 +485,24 @@
                 padding: 15px;
             }
 
-            input[type="number"],
-            input[type="range"] {
-                padding: 14px;
-                font-size: 1.1rem;
+            input[type="number"] {
+                padding: 8px 6px;
+                font-size: 0.95rem;
+                border-radius: 6px;
+                border-width: 1px;
                 -webkit-appearance: none;
                 appearance: none;
             }
 
             input[type="range"] {
-                height: 8px;
+                height: 6px;
+                padding: 0;
+                border: none;
             }
 
             input[type="range"]::-webkit-slider-thumb {
-                -webkit-appearance: none;
-                appearance: none;
-                width: 24px;
-                height: 24px;
-                border-radius: 50%;
-                background: #ffffff;
-                cursor: pointer;
+                width: 20px;
+                height: 20px;
             }
         }
 
@@ -467,39 +531,20 @@
         
         <div class="settings">
             <div class="setting-group">
-                <label for="totalReps">
-                    <span class="settings-label-full">Total Repetitions</span>
-                    <span class="settings-label-compact">Reps</span>
-                </label>
+                <label for="totalReps">Total Repetitions</label>
                 <input type="number" id="totalReps" min="1" max="999" value="100" title="Total repetitions">
             </div>
             <div class="setting-group">
-                <label for="holdSeconds">
-                    <span class="settings-label-full">Wait</span>
-                    <span class="settings-label-compact">Wait</span>
-                </label>
+                <label for="holdSeconds">Wait</label>
                 <input type="number" id="holdSeconds" min="1" max="999" value="5" title="Wait time before Attention each rep">
             </div>
             <div class="setting-group">
-                <label for="attentionSeconds">
-                    <span class="settings-label-full">Attention Period</span>
-                    <span class="settings-label-compact">Attn</span>
-                </label>
+                <label for="attentionSeconds">Attention</label>
                 <input type="number" id="attentionSeconds" min="1" max="999" value="7" title="Seconds after Attention until Shoot is called">
             </div>
             <div class="setting-group">
-                <label for="fireSeconds">
-                    <span class="settings-label-full">Shoot Duration</span>
-                    <span class="settings-label-compact">Shoot</span>
-                </label>
+                <label for="fireSeconds">Shoot Duration</label>
                 <input type="number" id="fireSeconds" min="1" max="999" value="20" title="Shoot phase duration in seconds">
-            </div>
-            <div class="setting-group">
-                <label for="beepVolume">Beep Volume</label>
-                <div class="volume-control">
-                    <input type="range" id="beepVolume" min="0" max="1" step="0.1" value="0.7">
-                    <span class="volume-value" id="volumeValue">70%</span>
-                </div>
             </div>
         </div>
 
@@ -523,7 +568,10 @@
             <div id="logEntries"></div>
         </div>
 
-        <div class="reset-footer">
+        <div class="bottom-bar">
+            <label for="beepVolume" class="bottom-bar-label">Volume</label>
+            <input type="range" id="beepVolume" class="bottom-bar-range" min="0" max="1" step="0.1" value="0.7">
+            <span class="volume-value" id="volumeValue">70%</span>
             <button class="btn-reset" id="btnReset">Reset</button>
         </div>
 
