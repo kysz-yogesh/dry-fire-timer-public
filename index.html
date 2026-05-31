@@ -3,12 +3,12 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">
-    <meta name="description" content="Dry-fire rifle practice timer for precision shooting training">
+    <meta name="description" content="Patnagar Shooting Club — dry-fire practice timer for precision shooting training">
     <meta name="theme-color" content="#1e3c72">
     <meta name="apple-mobile-web-app-capable" content="yes">
     <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
-    <meta name="apple-mobile-web-app-title" content="Dry-Fire Timer">
-    <title>Dry-Fire Rifle Practice Timer</title>
+    <meta name="apple-mobile-web-app-title" content="Patnagar Shooting Club">
+    <title>Patnagar Shooting Club | Dry-Fire Timer</title>
     <link rel="icon" type="image/svg+xml" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'%3E%3Ccircle cx='50' cy='50' r='45' fill='%231e3c72'/%3E%3Ctext x='50' y='70' font-size='60' text-anchor='middle' fill='white'%3E🎯%3C/text%3E%3C/svg%3E">
     <style>
         * {
@@ -43,12 +43,27 @@
             box-shadow: 0 8px 32px rgba(0, 0, 0, 0.3);
         }
 
+        .page-header {
+            text-align: center;
+            margin-bottom: 30px;
+        }
+
+        .brand-title {
+            font-size: 1.15rem;
+            font-weight: 600;
+            letter-spacing: 0.12em;
+            text-transform: uppercase;
+            margin-bottom: 8px;
+            opacity: 0.92;
+        }
+
         h1 {
             text-align: center;
-            font-size: 2.5rem;
-            margin-bottom: 30px;
+            font-size: 2rem;
+            margin-bottom: 0;
             font-weight: 300;
-            letter-spacing: 2px;
+            letter-spacing: 1px;
+            line-height: 1.2;
         }
 
         .settings {
@@ -129,7 +144,8 @@
         }
 
         .phase-label.fire { color: #ff6b6b; }
-        .phase-label.hold { color: #4ecdc4; }
+        .phase-label.wait { color: #4ecdc4; }
+        .phase-label.attention { color: #ffd93d; }
         .phase-label.paused { color: #ffd93d; }
         .phase-label.done { color: #51cf66; }
 
@@ -305,9 +321,19 @@
                 border-radius: 15px;
             }
 
+            .page-header {
+                margin-bottom: 18px;
+            }
+
+            .brand-title {
+                font-size: 0.72rem;
+                letter-spacing: 0.08em;
+                margin-bottom: 6px;
+            }
+
             h1 {
-                font-size: 1.5rem;
-                margin-bottom: 20px;
+                font-size: 1.25rem;
+                margin-bottom: 0;
             }
 
             .settings {
@@ -316,7 +342,7 @@
                 margin-bottom: 18px;
             }
 
-            .setting-group:nth-child(4) {
+            .setting-group:nth-child(5) {
                 grid-column: 1 / -1;
             }
 
@@ -335,7 +361,7 @@
                 line-height: 1.2;
             }
 
-            .setting-group:nth-child(-n + 3) input[type="number"] {
+            .setting-group:nth-child(-n + 4) input[type="number"] {
                 padding: 8px 6px;
                 font-size: 0.95rem;
                 border-radius: 6px;
@@ -434,7 +460,10 @@
 </head>
 <body>
     <div class="container">
-        <h1>Dry-Fire Practice Timer</h1>
+        <header class="page-header">
+            <p class="brand-title">Patnagar Shooting Club</p>
+            <h1>Dry-Fire Practice Timer</h1>
+        </header>
         
         <div class="settings">
             <div class="setting-group">
@@ -445,18 +474,25 @@
                 <input type="number" id="totalReps" min="1" max="999" value="100" title="Total repetitions">
             </div>
             <div class="setting-group">
-                <label for="fireSeconds">
-                    <span class="settings-label-full">Fire Duration (seconds)</span>
-                    <span class="settings-label-compact">Fire (s)</span>
+                <label for="holdSeconds">
+                    <span class="settings-label-full">Wait</span>
+                    <span class="settings-label-compact">Wait</span>
                 </label>
-                <input type="number" id="fireSeconds" min="1" max="999" value="20" title="Fire phase duration in seconds">
+                <input type="number" id="holdSeconds" min="1" max="999" value="5" title="Wait time before Attention each rep">
             </div>
             <div class="setting-group">
-                <label for="holdSeconds">
-                    <span class="settings-label-full">Hold Duration (seconds)</span>
-                    <span class="settings-label-compact">Hold (s)</span>
+                <label for="attentionSeconds">
+                    <span class="settings-label-full">Attention Period</span>
+                    <span class="settings-label-compact">Attn</span>
                 </label>
-                <input type="number" id="holdSeconds" min="1" max="999" value="5" title="Hold phase duration in seconds">
+                <input type="number" id="attentionSeconds" min="1" max="999" value="7" title="Seconds after Attention until Shoot is called">
+            </div>
+            <div class="setting-group">
+                <label for="fireSeconds">
+                    <span class="settings-label-full">Shoot Duration</span>
+                    <span class="settings-label-compact">Shoot</span>
+                </label>
+                <input type="number" id="fireSeconds" min="1" max="999" value="20" title="Shoot phase duration in seconds">
             </div>
             <div class="setting-group">
                 <label for="beepVolume">Beep Volume</label>
@@ -497,39 +533,54 @@
     </div>
 
     <script>
-        // State machine states
+        // Session + phase states
         const STATE = {
             STOPPED: 'STOPPED',
             RUNNING: 'RUNNING',
             PAUSED: 'PAUSED',
-            FIRE: 'FIRE',
-            HOLD: 'HOLD',
             DONE: 'DONE'
         };
+
+        const PHASE = {
+            WAIT: 'WAIT',
+            ATTENTION: 'ATTENTION',
+            FIRE: 'FIRE'
+        };
+
+        // Each rep: wait → attention → shoot (one wait per rep, before attention)
+        const REP_STEPS = [
+            { phase: PHASE.WAIT, durationKey: 'holdSeconds' },
+            { phase: PHASE.ATTENTION, durationKey: 'attentionSeconds' },
+            { phase: PHASE.FIRE, durationKey: 'fireSeconds' }
+        ];
+
+        const STEPS_PER_REP = REP_STEPS.length;
 
         let currentState = STATE.STOPPED;
         let audioContext = null;
         let animationFrameId = null;
-        let startTime = null;
         let pausedTime = 0;
         let currentRep = 0;
+        let repStepIndex = 0;
         let phaseStartTime = null;
         let phaseRemaining = 0;
-        let currentPhase = STATE.FIRE;
+        let currentPhase = PHASE.WAIT;
         let lastSessionSaveTime = 0;
 
         const STORAGE_KEYS = {
             totalReps: 'dryFire_totalReps',
-            fireSeconds: 'dryFire_fireSeconds',
             holdSeconds: 'dryFire_holdSeconds',
+            attentionSeconds: 'dryFire_attentionSeconds',
+            fireSeconds: 'dryFire_fireSeconds',
             beepVolume: 'dryFire_beepVolume',
             session: 'dryFire_session'
         };
 
         // DOM elements
         const totalRepsInput = document.getElementById('totalReps');
-        const fireSecondsInput = document.getElementById('fireSeconds');
         const holdSecondsInput = document.getElementById('holdSeconds');
+        const attentionSecondsInput = document.getElementById('attentionSeconds');
+        const fireSecondsInput = document.getElementById('fireSeconds');
         const beepVolumeInput = document.getElementById('beepVolume');
         const volumeValue = document.getElementById('volumeValue');
         const phaseLabel = document.getElementById('phaseLabel');
@@ -545,13 +596,15 @@
         // Load settings from localStorage
         function loadSettings() {
             const savedReps = localStorage.getItem(STORAGE_KEYS.totalReps);
-            const savedFire = localStorage.getItem(STORAGE_KEYS.fireSeconds);
             const savedHold = localStorage.getItem(STORAGE_KEYS.holdSeconds);
+            const savedAttention = localStorage.getItem(STORAGE_KEYS.attentionSeconds);
+            const savedFire = localStorage.getItem(STORAGE_KEYS.fireSeconds);
             const savedVolume = localStorage.getItem(STORAGE_KEYS.beepVolume);
 
             if (savedReps) totalRepsInput.value = savedReps;
-            if (savedFire) fireSecondsInput.value = savedFire;
             if (savedHold) holdSecondsInput.value = savedHold;
+            if (savedAttention) attentionSecondsInput.value = savedAttention;
+            if (savedFire) fireSecondsInput.value = savedFire;
             if (savedVolume) {
                 beepVolumeInput.value = savedVolume;
                 updateVolumeDisplay();
@@ -561,8 +614,9 @@
         // Save settings to localStorage
         function saveSettings() {
             localStorage.setItem(STORAGE_KEYS.totalReps, totalRepsInput.value);
-            localStorage.setItem(STORAGE_KEYS.fireSeconds, fireSecondsInput.value);
             localStorage.setItem(STORAGE_KEYS.holdSeconds, holdSecondsInput.value);
+            localStorage.setItem(STORAGE_KEYS.attentionSeconds, attentionSecondsInput.value);
+            localStorage.setItem(STORAGE_KEYS.fireSeconds, fireSecondsInput.value);
             localStorage.setItem(STORAGE_KEYS.beepVolume, beepVolumeInput.value);
         }
 
@@ -585,6 +639,7 @@
             const session = {
                 currentState,
                 currentRep,
+                repStepIndex,
                 currentPhase,
                 phaseRemaining,
                 pausedTime,
@@ -606,7 +661,14 @@
                 if (!session || typeof session !== 'object') return;
 
                 currentRep = Number.isFinite(session.currentRep) ? session.currentRep : 0;
-                currentPhase = session.currentPhase === STATE.HOLD ? STATE.HOLD : STATE.FIRE;
+                let savedStep = Number.isFinite(session.repStepIndex)
+                    ? session.repStepIndex
+                    : legacyPhaseToStepIndex(session.currentPhase);
+                if (savedStep >= STEPS_PER_REP) {
+                    savedStep = 0;
+                }
+                repStepIndex = Math.min(STEPS_PER_REP - 1, Math.max(0, savedStep));
+                syncPhaseFromStep();
                 phaseRemaining = Number.isFinite(session.phaseRemaining) ? session.phaseRemaining : 0;
                 pausedTime = Number.isFinite(session.pausedTime) ? session.pausedTime : 0;
                 currentState = Object.values(STATE).includes(session.currentState) ? session.currentState : STATE.STOPPED;
@@ -626,6 +688,19 @@
             if (!audioContext) {
                 audioContext = new (window.AudioContext || window.webkitAudioContext)();
             }
+        }
+
+        function speak(text) {
+            if (!('speechSynthesis' in window)) return;
+
+            const volume = parseFloat(beepVolumeInput.value);
+            if (volume === 0) return;
+
+            window.speechSynthesis.cancel();
+            const utterance = new SpeechSynthesisUtterance(text);
+            utterance.volume = volume;
+            utterance.rate = 0.95;
+            window.speechSynthesis.speak(utterance);
         }
 
         // Play beep sound
@@ -679,32 +754,93 @@
 
         // Validate inputs
         function validateInputs() {
-            const reps = parseInt(totalRepsInput.value);
-            const fire = parseInt(fireSecondsInput.value);
-            const hold = parseInt(holdSecondsInput.value);
+            const reps = parseInt(totalRepsInput.value, 10);
+            const hold = parseInt(holdSecondsInput.value, 10);
+            const attention = parseInt(attentionSecondsInput.value, 10);
+            const fire = parseInt(fireSecondsInput.value, 10);
 
             if (isNaN(reps) || reps < 1 || reps > 999) {
                 alert('Total repetitions must be between 1 and 999');
                 return false;
             }
-            if (isNaN(fire) || fire < 1 || fire > 999) {
-                alert('Fire duration must be between 1 and 999 seconds');
+            if (isNaN(hold) || hold < 1 || hold > 999) {
+                alert('Wait time must be between 1 and 999 seconds');
                 return false;
             }
-            if (isNaN(hold) || hold < 1 || hold > 999) {
-                alert('Hold duration must be between 1 and 999 seconds');
+            if (isNaN(attention) || attention < 1 || attention > 999) {
+                alert('Attention period must be between 1 and 999 seconds');
+                return false;
+            }
+            if (isNaN(fire) || fire < 1 || fire > 999) {
+                alert('Shoot duration must be between 1 and 999 seconds');
                 return false;
             }
             return true;
         }
 
-        // Get current settings
         function getSettings() {
             return {
-                totalReps: parseInt(totalRepsInput.value),
-                fireSeconds: parseInt(fireSecondsInput.value),
-                holdSeconds: parseInt(holdSecondsInput.value)
+                totalReps: parseInt(totalRepsInput.value, 10),
+                holdSeconds: parseInt(holdSecondsInput.value, 10),
+                attentionSeconds: parseInt(attentionSecondsInput.value, 10),
+                fireSeconds: parseInt(fireSecondsInput.value, 10)
             };
+        }
+
+        function legacyPhaseToStepIndex(phase) {
+            switch (phase) {
+                case 'HOLD':
+                case PHASE.WAIT:
+                    return 0;
+                case PHASE.ATTENTION:
+                    return 1;
+                case PHASE.FIRE:
+                    return 2;
+                case 'REST':
+                    return 0;
+                default:
+                    return 0;
+            }
+        }
+
+        function getStepDuration(settings) {
+            return settings[REP_STEPS[repStepIndex].durationKey];
+        }
+
+        function syncPhaseFromStep() {
+            currentPhase = REP_STEPS[repStepIndex].phase;
+        }
+
+        function getPhaseLabelText(phase) {
+            switch (phase) {
+                case PHASE.WAIT:
+                    return 'WAIT';
+                case PHASE.ATTENTION:
+                    return 'ATTENTION';
+                case PHASE.FIRE:
+                    return 'SHOOT';
+                default:
+                    return 'READY';
+            }
+        }
+
+        function getPhaseCssClass(phase) {
+            switch (phase) {
+                case PHASE.WAIT:
+                    return 'wait';
+                case PHASE.ATTENTION:
+                    return 'attention';
+                case PHASE.FIRE:
+                    return 'fire';
+                default:
+                    return '';
+            }
+        }
+
+        function beginStep(settings, now) {
+            syncPhaseFromStep();
+            phaseStartTime = now;
+            phaseRemaining = getStepDuration(settings);
         }
 
         // Update UI based on state
@@ -713,29 +849,15 @@
             let remaining = 0;
 
             if (currentState === STATE.RUNNING || currentState === STATE.PAUSED) {
-                if (currentPhase === STATE.FIRE) {
-                    remaining = Math.max(0, phaseRemaining);
-                } else if (currentPhase === STATE.HOLD) {
-                    remaining = Math.max(0, phaseRemaining);
-                }
+                remaining = Math.max(0, phaseRemaining);
 
-                // Calculate overall session progress
-                // Each rep has fire + hold phases
-                const totalPhasesPerRep = 2;
                 const completedReps = Math.max(0, currentRep - 1);
-                const currentPhaseIndex = currentPhase === STATE.FIRE ? 0 : 1;
-                const totalPhases = settings.totalReps * totalPhasesPerRep;
-                
-                // Calculate phase progress within current rep
-                let phaseProgress = 0;
-                if (currentPhase === STATE.FIRE) {
-                    phaseProgress = (settings.fireSeconds - remaining) / settings.fireSeconds;
-                } else if (currentPhase === STATE.HOLD) {
-                    phaseProgress = (settings.holdSeconds - remaining) / settings.holdSeconds;
-                }
-                
-                // Overall progress = (completed reps * 2 + current phase index + phase progress) / total phases
-                const overallProgress = ((completedReps * totalPhasesPerRep + currentPhaseIndex + phaseProgress) / totalPhases) * 100;
+                const stepDuration = getStepDuration(settings);
+                const phaseProgress = stepDuration > 0
+                    ? (stepDuration - remaining) / stepDuration
+                    : 0;
+                const totalSteps = settings.totalReps * STEPS_PER_REP;
+                const overallProgress = ((completedReps * STEPS_PER_REP + repStepIndex + phaseProgress) / totalSteps) * 100;
                 progressBar.style.width = `${Math.min(100, Math.max(0, overallProgress))}%`;
             } else if (currentState === STATE.DONE) {
                 progressBar.style.width = '100%';
@@ -743,7 +865,6 @@
                 progressBar.style.width = '0%';
             }
 
-            // Update phase label and timer
             if (currentState === STATE.PAUSED) {
                 phaseLabel.textContent = 'PAUSED';
                 phaseLabel.className = 'phase-label paused';
@@ -752,13 +873,10 @@
                 phaseLabel.textContent = 'DONE';
                 phaseLabel.className = 'phase-label done';
                 timer.textContent = '00:00';
-            } else if (currentPhase === STATE.FIRE) {
-                phaseLabel.textContent = 'FIRE';
-                phaseLabel.className = 'phase-label fire';
-                timer.textContent = formatTime(Math.max(0, remaining));
-            } else if (currentPhase === STATE.HOLD) {
-                phaseLabel.textContent = 'HOLD';
-                phaseLabel.className = 'phase-label hold';
+            } else if (currentState === STATE.RUNNING && Object.values(PHASE).includes(currentPhase)) {
+                const cssClass = getPhaseCssClass(currentPhase);
+                phaseLabel.textContent = getPhaseLabelText(currentPhase);
+                phaseLabel.className = cssClass ? `phase-label ${cssClass}` : 'phase-label';
                 timer.textContent = formatTime(Math.max(0, remaining));
             } else {
                 phaseLabel.textContent = 'READY';
@@ -766,14 +884,12 @@
                 timer.textContent = '00:00';
             }
 
-            // Update progress info
             progressInfo.textContent = `Rep ${currentRep} / ${settings.totalReps}`;
 
-            // Update buttons
             btnStart.disabled = currentState !== STATE.STOPPED;
             btnPause.disabled = currentState !== STATE.RUNNING;
             btnResume.disabled = currentState !== STATE.PAUSED;
-            btnReset.disabled = false; // Reset always available
+            btnReset.disabled = false;
         }
 
         // Add log entry
@@ -787,6 +903,43 @@
         }
 
         // Animation loop with drift correction
+        function advancePhase(settings, now) {
+            if (repStepIndex === 0) {
+                speak('Attention');
+                addLogEntry('Attention');
+                repStepIndex = 1;
+                beginStep(settings, now);
+                return;
+            }
+
+            if (repStepIndex === 1) {
+                speak('Shoot');
+                addLogEntry('Shoot');
+                repStepIndex = 2;
+                beginStep(settings, now);
+                return;
+            }
+
+            if (repStepIndex === 2) {
+                playBeep(1200, 0.12, 'single');
+                vibrate([50]);
+                addLogEntry('Shot complete');
+                currentRep++;
+
+                if (currentRep > settings.totalReps) {
+                    currentState = STATE.DONE;
+                    playBeep(600, 0.3, 'double');
+                    vibrate([200, 100, 200]);
+                    addLogEntry('Session completed!');
+                    return;
+                }
+
+                addLogEntry(`Rep ${currentRep} started — wait`);
+                repStepIndex = 0;
+                beginStep(settings, now);
+            }
+        }
+
         function animate() {
             if (currentState !== STATE.RUNNING) {
                 animationFrameId = null;
@@ -796,40 +949,10 @@
             const settings = getSettings();
             const now = performance.now();
             const elapsed = (now - phaseStartTime) / 1000;
-            phaseRemaining = (currentPhase === STATE.FIRE ? settings.fireSeconds : settings.holdSeconds) - elapsed;
+            phaseRemaining = getStepDuration(settings) - elapsed;
 
             if (phaseRemaining <= 0) {
-                // Phase complete
-                if (currentPhase === STATE.FIRE) {
-                    // FIRE phase ends at 0 - beep for trigger (different sound)
-                    playBeep(1200, 0.2, 'single'); // Higher pitch beep for trigger
-                    vibrate([50]);
-                    // Transition to HOLD
-                    currentPhase = STATE.HOLD;
-                    phaseStartTime = now;
-                    phaseRemaining = settings.holdSeconds;
-                } else if (currentPhase === STATE.HOLD) {
-                    // HOLD complete, move to next rep
-                    currentRep++;
-                    
-                    if (currentRep > settings.totalReps) {
-                        // All reps complete
-                        currentState = STATE.DONE;
-                        playBeep(600, 0.3, 'double');
-                        vibrate([200, 100, 200]);
-                        addLogEntry('Session completed!');
-                        updateUI();
-                        return;
-                    } else {
-                        // Next rep - start of FIRE phase
-                        playBeep(600, 0.25, 'single'); // Lower beep for start of FIRE phase (aiming begins)
-                        vibrate([100]);
-                        addLogEntry(`Rep ${currentRep} started`);
-                        currentPhase = STATE.FIRE;
-                        phaseStartTime = now;
-                        phaseRemaining = settings.fireSeconds;
-                    }
-                }
+                advancePhase(settings, now);
             }
 
             updateUI();
@@ -837,10 +960,16 @@
                 saveSessionProgress();
                 lastSessionSaveTime = now;
             }
+
+            if (currentState === STATE.DONE) {
+                animationFrameId = null;
+                updateUI();
+                return;
+            }
+
             animationFrameId = requestAnimationFrame(animate);
         }
 
-        // Start timer
         function start() {
             if (!validateInputs()) return;
             if (currentState === STATE.RUNNING) return;
@@ -850,22 +979,20 @@
 
             currentState = STATE.RUNNING;
             currentRep = 1;
-            currentPhase = STATE.FIRE;
+            repStepIndex = 0;
             pausedTime = 0;
-            
+
             const settings = getSettings();
-            phaseStartTime = performance.now();
-            phaseRemaining = settings.fireSeconds;
+            const now = performance.now();
+            beginStep(settings, now);
 
             addLogEntry(`Session started - ${settings.totalReps} reps`);
-            addLogEntry('Rep 1 started');
-            playBeep(600, 0.25, 'single'); // Lower beep for start of FIRE phase (aiming begins)
-            vibrate([100]);
+            addLogEntry('Rep 1 started — wait');
 
             updateUI();
             saveSessionProgress();
             animate();
-            requestWakeLock(); // Keep screen awake during practice
+            requestWakeLock();
         }
 
         // Pause timer
@@ -877,6 +1004,7 @@
             pausedTime = now - phaseStartTime;
             cancelAnimationFrame(animationFrameId);
             animationFrameId = null;
+            window.speechSynthesis.cancel();
 
             addLogEntry('Paused');
             updateUI();
@@ -923,7 +1051,8 @@
                 stop();
             }
             currentRep = 0;
-            currentPhase = STATE.FIRE;
+            repStepIndex = 0;
+            currentPhase = PHASE.WAIT;
             phaseRemaining = 0;
             currentState = STATE.STOPPED;
             logEntries.innerHTML = '';
@@ -950,8 +1079,9 @@
         });
 
         totalRepsInput.addEventListener('change', saveSettings);
-        fireSecondsInput.addEventListener('change', saveSettings);
         holdSecondsInput.addEventListener('change', saveSettings);
+        attentionSecondsInput.addEventListener('change', saveSettings);
+        fireSecondsInput.addEventListener('change', saveSettings);
 
         // Keyboard shortcuts
         document.addEventListener('keydown', (e) => {
